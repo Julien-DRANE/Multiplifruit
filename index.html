@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jeu de Multiplications au Zoo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <!-- Bandeau arc-en-ciel avec le score -->
+    <div id="rainbow-band">
+      <span id="score">Score : 0</span>
+    </div>
+    
+    <!-- Zone de la cible -->
+    <div id="target-container">
+      <span id="target">?</span>
+    </div>
+    
+    <!-- Zone de l'opération (deux emplacements et l'opérateur "x") -->
+    <div id="operation">
+      <div id="slot1" class="slot" data-index="0"></div>
+      <div class="operator">x</div>
+      <div id="slot2" class="slot" data-index="1"></div>
+    </div>
+    
+    <!-- Palette des chiffres (2 à 10) -->
+    <div id="digits-container"></div>
+    
+    <!-- Conteneur pour afficher la solution en cas d'erreur -->
+    <div id="solution" style="text-align: center; font-size: 1.2em; margin-top: 10px;"></div>
+    
+    <!-- Zone d'animation des fruits -->
+    <div id="fruit-container"></div>
+    
+    <!-- Bassine qui stocke les fruits -->
+    <div id="basin"></div>
+  </div>
+  
+  <!-- Tableau des scores et message de fin (affiché à la victoire) -->
+  <div id="scoreboard" style="display:none;"></div>
+  
+  <script src="main.js"></script>
+</body>
+</html>
