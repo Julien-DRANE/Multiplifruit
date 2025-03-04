@@ -7,6 +7,28 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Menu de sélection du mode TABLES -->
+  <div id="table-selector">
+    <h2>Choisissez la table à réviser</h2>
+    <div id="table-buttons">
+      <!-- Boutons pour les tables de 2 à 10 -->
+      <button class="table-button" data-table="2">Table de 2</button>
+      <button class="table-button" data-table="3">Table de 3</button>
+      <button class="table-button" data-table="4">Table de 4</button>
+      <button class="table-button" data-table="5">Table de 5</button>
+      <button class="table-button" data-table="6">Table de 6</button>
+      <button class="table-button" data-table="7">Table de 7</button>
+      <button class="table-button" data-table="8">Table de 8</button>
+      <button class="table-button" data-table="9">Table de 9</button>
+      <button class="table-button" data-table="10">Table de 10</button>
+    </div>
+    <!-- Option pour jouer en mode aléatoire -->
+    <button id="random-mode">Mode aléatoire</button>
+  </div>
+
+  <!-- Indicateur de mode (optionnel) -->
+  <div id="mode-indicator" style="text-align:center; font-weight:bold; margin:10px;"></div>
+
   <div id="game-container">
     <!-- Bandeau arc-en-ciel avec le score -->
     <div id="rainbow-band">
@@ -42,5 +64,16 @@
   <div id="scoreboard" style="display:none;"></div>
   
   <script src="main.js"></script>
+  
+  <script>
+    // Gestion du bouton "Mode aléatoire"
+    document.getElementById('random-mode').addEventListener('click', () => {
+      // Désactive le mode table en cachant le sélecteur et en réinitialisant selectedTable
+      selectedTable = null;
+      document.getElementById('table-selector').style.display = 'none';
+      document.getElementById('mode-indicator').textContent = "Mode aléatoire";
+      initGame();
+    });
+  </script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /***** Initialisation des sons *****/
 const dingSound = new Audio('sounds/ding.mp3');
-dingSound.volume = 0.1; // Faible volume pour le ding
+dingSound.volume = 0.06; // Faible volume pour le ding
 
 const ambianceSound = new Audio('sounds/ambiance.mp3');
 ambianceSound.volume = 0.2; // Faible volume pour l'ambiance
@@ -22,6 +22,7 @@ document.addEventListener('click', startAmbiance);
 let factor1, factor2, targetValue;
 const slotValues = [null, null];
 let score = 0;
+let selectedTable = null; // Si non null, mode table activé
 
 const targetElement = document.getElementById('target');
 const slot1 = document.getElementById('slot1');
@@ -31,33 +32,43 @@ const fruitContainer = document.getElementById('fruit-container');
 const basin = document.getElementById('basin');
 const scoreElement = document.getElementById('score');
 const scoreboard = document.getElementById('scoreboard');
-const solutionContainer = document.getElementById('solution'); // Conteneur pour la solution
+const solutionContainer = document.getElementById('solution');
+const tableSelector = document.getElementById('table-selector');
 
 /*
-  La fonction initGame génère deux facteurs compris entre 2 et 10
-  et s'assure que leur produit (la cible) est supérieur à 10.
+  Fonction d'initialisation du mode de jeu.
+  Si un mode table est sélectionné (selectedTable != null),
+  le premier facteur est fixé à selectedTable, sinon les deux facteurs
+  sont générés aléatoirement (avec produit > 10).
 */
 function initGame() {
-  do {
-    factor1 = Math.floor(Math.random() * 9) + 2; // Valeur entre 2 et 10
-    factor2 = Math.floor(Math.random() * 9) + 2; // Valeur entre 2 et 10
+  if (selectedTable !== null) {
+    factor1 = selectedTable;
+    factor2 = Math.floor(Math.random() * 9) + 2; // entre 2 et 10
     targetValue = factor1 * factor2;
-  } while (targetValue <= 10);
+  } else {
+    do {
+      factor1 = Math.floor(Math.random() * 9) + 2; // entre 2 et 10
+      factor2 = Math.floor(Math.random() * 9) + 2; // entre 2 et 10
+      targetValue = factor1 * factor2;
+    } while (targetValue <= 10);
+  }
   
   targetElement.textContent = targetValue;
-  // Réinitialiser les emplacements de l'opération
+  // Réinitialiser les zones d'opération et la solution
   slot1.textContent = '';
   slot2.textContent = '';
   slotValues[0] = null;
   slotValues[1] = null;
-  // Nettoyer la solution affichée
   solutionContainer.innerHTML = '';
 }
 
 /*
-  Création des éléments chiffres de 2 à 10 (on oublie le chiffre 1).
+  Création des éléments chiffres.
+  Pour la révision en mode tables, on conserve toujours la palette de chiffres de 2 à 10.
 */
 function createDigits() {
+  digitsContainer.innerHTML = ''; // Nettoyer la palette
   for (let i = 2; i <= 10; i++) {
     const digit = document.createElement('div');
     digit.classList.add('digit');
@@ -112,15 +123,14 @@ function touchMove(e) {
   e.preventDefault();
   if (!touchItem) return;
   const touch = e.touches[0];
-  // Créer un clone flottant pour visualiser le déplacement
   if (!touchItem.clone) {
     touchItem.clone = touchItem.cloneNode(true);
     touchItem.clone.style.position = 'absolute';
     touchItem.clone.style.pointerEvents = 'none';
     document.body.appendChild(touchItem.clone);
   }
-  touchItem.clone.style.left = (touch.pageX - touchItem.offsetWidth/2) + 'px';
-  touchItem.clone.style.top = (touch.pageY - touchItem.offsetHeight/2) + 'px';
+  touchItem.clone.style.left = (touch.pageX - touchItem.offsetWidth / 2) + 'px';
+  touchItem.clone.style.top = (touch.pageY - touchItem.offsetHeight / 2) + 'px';
 }
 function touchEnd(e) {
   if (touchItem && touchItem.clone) {
@@ -152,10 +162,8 @@ function checkOperation() {
       score++;
       scoreElement.textContent = "Score : " + score;
       dingSound.play();
-      // Lancer l'animation des fruits après un léger délai
       setTimeout(triggerFruitAnimation, 300);
       
-      // Si le score atteint 10, déclencher la victoire
       if (score === 10) {
         winSound.play();
         triggerWinAnimation();
@@ -163,23 +171,19 @@ function checkOperation() {
         return; // Fin de la partie
       }
       
-      // Lancer une nouvelle opération après un délai
       setTimeout(initGame, 2000);
     } else {
-      // Réponse incorrecte : le score baisse d'un point (mais pas en dessous de 0)
+      // Réponse incorrecte : le score baisse d'un point (pas en dessous de 0)
       score = Math.max(score - 1, 0);
       scoreElement.textContent = "Score : " + score;
-      
-      // Afficher la solution en gras sous les chiffres
+      // Affichage de la solution en gras
       solutionContainer.innerHTML = `<strong>La solution était : ${factor1} x ${factor2} = ${targetValue}</strong>`;
-      
-      // Lancer une nouvelle opération après un délai pour permettre de lire la solution
       setTimeout(initGame, 2000);
     }
   }
 }
 
-/***** Animation des fruits avec sons pop aléatoires et délais aléatoires *****/
+/***** Animation des fruits avec sons pop aléatoires *****/
 function triggerFruitAnimation() {
   const popSounds = ['sounds/b1.mp3', 'sounds/b2.mp3', 'sounds/b3.mp3', 'sounds/b4.mp3'];
   const numFruits = 5;
@@ -189,13 +193,11 @@ function triggerFruitAnimation() {
     fruit.classList.add('fruit');
     const fruitEmojis = ['🍎', '🍌', '🍇', '🍒', '🍍'];
     fruit.textContent = fruitEmojis[Math.floor(Math.random() * fruitEmojis.length)];
-    // Positionnement pour créer une grappe
     fruit.style.left = Math.random() * (window.innerWidth - 50) + 'px';
     fruit.style.animationDelay = Math.random() + 's';
     fruitContainer.appendChild(fruit);
     
-    // Jouer un son pop choisi aléatoirement avec un délai aléatoire pour chaque fruit
-    const randomDelay = Math.random() * 1000; // entre 0 et 1000 ms
+    const randomDelay = Math.random() * 1000; // délai entre 0 et 1000 ms
     setTimeout(() => {
       const randomSoundIndex = Math.floor(Math.random() * popSounds.length);
       const popSound = new Audio(popSounds[randomSoundIndex]);
@@ -203,7 +205,6 @@ function triggerFruitAnimation() {
       popSound.play().catch(error => console.log("Erreur de lecture du son pop :", error));
     }, randomDelay);
     
-    // Au terme de l'animation, transférer le fruit dans la bassine
     fruit.addEventListener('animationend', () => {
       fruit.style.animation = 'none';
       fruit.style.top = 'auto';
@@ -214,21 +215,17 @@ function triggerFruitAnimation() {
   }
 }
 
-/***** Animation de victoire : confettis qui jaillissent de partout *****/
+/***** Animation de victoire : confettis partout sur l'écran *****/
 function triggerWinAnimation() {
-  const numberOfConfetti = 150; // Nombre de confettis pour remplir l'écran
+  const numberOfConfetti = 150;
   for (let i = 0; i < numberOfConfetti; i++) {
     const confetti = document.createElement('div');
     confetti.classList.add('confetti');
-    // Choix aléatoire d'une couleur
     const colors = ['#FF0', '#0F0', '#0FF', '#F0F', '#00F', '#F00'];
     confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-    // Positionnement aléatoire sur toute la surface de l'écran
     confetti.style.left = Math.random() * 100 + '%';
     confetti.style.top = Math.random() * 100 + '%';
-    // Ajout au body pour couvrir tout l'écran
     document.body.appendChild(confetti);
-    // Suppression du confetti une fois l'animation terminée
     confetti.addEventListener('animationend', () => {
       confetti.remove();
     });
@@ -251,12 +248,28 @@ function restartGame() {
   score = 0;
   scoreElement.textContent = "Score : " + score;
   scoreboard.style.display = 'none';
-  // Optionnel : réinitialiser le contenu des autres zones
   basin.innerHTML = '';
   fruitContainer.innerHTML = '';
   initGame();
 }
 
-/***** Lancement du jeu *****/
+/***** Gestion du mode TABLES : sélection de la table de multiplication *****/
+function initTableMode() {
+  // Lorsque le joueur clique sur un bouton de sélection,
+  // on mémorise la table choisie et on cache le sélecteur.
+  const buttons = document.querySelectorAll('.table-button');
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      selectedTable = parseInt(button.dataset.table);
+      tableSelector.style.display = 'none';
+      // Mise à jour d'un titre ou d'un indicateur de mode (optionnel)
+      document.getElementById('mode-indicator').textContent = `Mode Table de ${selectedTable}`;
+      initGame();
+    });
+  });
+}
+
+// Lancement initial
+initTableMode();
 initGame();
 createDigits();
