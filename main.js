@@ -1,6 +1,6 @@
 /***** Initialisation des sons *****/
 const dingSound = new Audio('sounds/ding.mp3');
-dingSound.volume = 0.06; // Faible volume pour le ding
+dingSound.volume = 0.3; // Faible volume pour le ding
 
 const ambianceSound = new Audio('sounds/ambiance.mp3');
 ambianceSound.volume = 0.2; // Faible volume pour l'ambiance
@@ -22,7 +22,7 @@ document.addEventListener('click', startAmbiance);
 let factor1, factor2, targetValue;
 const slotValues = [null, null];
 let score = 0;
-let selectedTable = null; // Si non null, mode table activé
+let selectedTable = null; // Pour le mode table
 
 const targetElement = document.getElementById('target');
 const slot1 = document.getElementById('slot1');
@@ -36,10 +36,9 @@ const solutionContainer = document.getElementById('solution');
 const tableSelector = document.getElementById('table-selector');
 
 /*
-  Fonction d'initialisation du mode de jeu.
-  Si un mode table est sélectionné (selectedTable != null),
-  le premier facteur est fixé à selectedTable, sinon les deux facteurs
-  sont générés aléatoirement (avec produit > 10).
+  Fonction d'initialisation du jeu.
+  Si un mode table est sélectionné, le premier facteur est fixé.
+  Sinon, les deux facteurs sont générés aléatoirement (avec produit > 10).
 */
 function initGame() {
   if (selectedTable !== null) {
@@ -55,7 +54,7 @@ function initGame() {
   }
   
   targetElement.textContent = targetValue;
-  // Réinitialiser les zones d'opération et la solution
+  // Réinitialiser les emplacements de l'opération
   slot1.textContent = '';
   slot2.textContent = '';
   slotValues[0] = null;
@@ -64,21 +63,41 @@ function initGame() {
 }
 
 /*
-  Création des éléments chiffres.
-  Pour la révision en mode tables, on conserve toujours la palette de chiffres de 2 à 10.
+  Création des éléments chiffres de 2 à 10.
+  On ajoute ici les événements de glisser-déposer, tactiles ET un clic pour sélectionner.
 */
 function createDigits() {
-  digitsContainer.innerHTML = ''; // Nettoyer la palette
+  digitsContainer.innerHTML = ''; // Réinitialise la palette
   for (let i = 2; i <= 10; i++) {
     const digit = document.createElement('div');
     digit.classList.add('digit');
     digit.textContent = i;
     digit.setAttribute('draggable', 'true');
-    // Événements pour le drag and drop (desktop)
+    // Glisser-déposer
     digit.addEventListener('dragstart', dragStart);
-    // Événements pour le tactile (smartphone)
+    // Tactile
     digit.addEventListener('touchstart', touchStart, {passive: false});
+    // Ajout par simple clic
+    digit.addEventListener('click', onDigitClick);
     digitsContainer.appendChild(digit);
+  }
+}
+
+/*
+  Fonction appelée lors d'un clic sur un chiffre.
+  Le chiffre est ajouté dans le premier emplacement vide de l'opération.
+*/
+function onDigitClick(e) {
+  const value = e.target.textContent;
+  if (slotValues[0] === null) {
+    slot1.textContent = value;
+    slotValues[0] = parseInt(value);
+  } else if (slotValues[1] === null) {
+    slot2.textContent = value;
+    slotValues[1] = parseInt(value);
+  }
+  if (slotValues[0] !== null && slotValues[1] !== null) {
+    checkOperation();
   }
 }
 
@@ -129,8 +148,8 @@ function touchMove(e) {
     touchItem.clone.style.pointerEvents = 'none';
     document.body.appendChild(touchItem.clone);
   }
-  touchItem.clone.style.left = (touch.pageX - touchItem.offsetWidth / 2) + 'px';
-  touchItem.clone.style.top = (touch.pageY - touchItem.offsetHeight / 2) + 'px';
+  touchItem.clone.style.left = (touch.pageX - touchItem.offsetWidth/2) + 'px';
+  touchItem.clone.style.top = (touch.pageY - touchItem.offsetHeight/2) + 'px';
 }
 function touchEnd(e) {
   if (touchItem && touchItem.clone) {
@@ -173,10 +192,9 @@ function checkOperation() {
       
       setTimeout(initGame, 2000);
     } else {
-      // Réponse incorrecte : le score baisse d'un point (pas en dessous de 0)
+      // Réponse incorrecte : baisse de score d'un point (min 0)
       score = Math.max(score - 1, 0);
       scoreElement.textContent = "Score : " + score;
-      // Affichage de la solution en gras
       solutionContainer.innerHTML = `<strong>La solution était : ${factor1} x ${factor2} = ${targetValue}</strong>`;
       setTimeout(initGame, 2000);
     }
@@ -195,9 +213,12 @@ function triggerFruitAnimation() {
     fruit.textContent = fruitEmojis[Math.floor(Math.random() * fruitEmojis.length)];
     fruit.style.left = Math.random() * (window.innerWidth - 50) + 'px';
     fruit.style.animationDelay = Math.random() + 's';
+    // Forcer l'animation de chute
+    fruit.style.animation = 'fall 2s linear forwards';
     fruitContainer.appendChild(fruit);
     
-    const randomDelay = Math.random() * 1000; // délai entre 0 et 1000 ms
+    // Jouer un son pop aléatoire après un délai aléatoire
+    const randomDelay = Math.random() * 1000;
     setTimeout(() => {
       const randomSoundIndex = Math.floor(Math.random() * popSounds.length);
       const popSound = new Audio(popSounds[randomSoundIndex]);
@@ -205,6 +226,7 @@ function triggerFruitAnimation() {
       popSound.play().catch(error => console.log("Erreur de lecture du son pop :", error));
     }, randomDelay);
     
+    // Quand l'animation se termine, transférer le fruit dans la bassine
     fruit.addEventListener('animationend', () => {
       fruit.style.animation = 'none';
       fruit.style.top = 'auto';
@@ -253,23 +275,20 @@ function restartGame() {
   initGame();
 }
 
-/***** Gestion du mode TABLES : sélection de la table de multiplication *****/
+/***** Gestion du mode TABLES : sélection de la table à réviser *****/
 function initTableMode() {
-  // Lorsque le joueur clique sur un bouton de sélection,
-  // on mémorise la table choisie et on cache le sélecteur.
   const buttons = document.querySelectorAll('.table-button');
   buttons.forEach(button => {
     button.addEventListener('click', () => {
       selectedTable = parseInt(button.dataset.table);
       tableSelector.style.display = 'none';
-      // Mise à jour d'un titre ou d'un indicateur de mode (optionnel)
       document.getElementById('mode-indicator').textContent = `Mode Table de ${selectedTable}`;
       initGame();
     });
   });
 }
 
-// Lancement initial
+// Lancement initial du mode TABLES
 initTableMode();
 initGame();
 createDigits();
