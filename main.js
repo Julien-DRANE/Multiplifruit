@@ -1,13 +1,13 @@
 /***** Initialisation des sons *****/
 const dingSound = new Audio('sounds/ding.mp3');
-dingSound.volume = 0.3; // Faible volume pour le ding
+dingSound.volume = 0.1; // Faible volume pour le ding
 
 const ambianceSound = new Audio('sounds/ambiance.mp3');
 ambianceSound.volume = 0.2; // Faible volume pour l'ambiance
 ambianceSound.loop = true;
 
 const winSound = new Audio('sounds/win.mp3');
-winSound.volume = 0.3; // Volume pour le son win
+winSound.volume = 0.2; // Volume pour le son win
 
 // Démarrer le fond sonore dès la première interaction de l'utilisateur
 function startAmbiance() {
@@ -64,7 +64,7 @@ function initGame() {
 
 /*
   Création des éléments chiffres de 2 à 10.
-  On ajoute ici les événements de glisser-déposer, tactiles ET un clic pour sélectionner.
+  On ajoute ici les événements de glisser-déposer, tactiles, et un clic/tap pour sélectionner.
 */
 function createDigits() {
   digitsContainer.innerHTML = ''; // Réinitialise la palette
@@ -73,18 +73,22 @@ function createDigits() {
     digit.classList.add('digit');
     digit.textContent = i;
     digit.setAttribute('draggable', 'true');
-    // Glisser-déposer
+    // Glisser-déposer (desktop)
     digit.addEventListener('dragstart', dragStart);
-    // Tactile
+    // Événement tactile pour le démarrage
     digit.addEventListener('touchstart', touchStart, {passive: false});
-    // Ajout par simple clic
+    // Ajout par simple clic (desktop)
     digit.addEventListener('click', onDigitClick);
+    // Ajout de l'événement touchend pour smartphone
+    digit.addEventListener('touchend', (e) => {
+      onDigitClick(e);
+    });
     digitsContainer.appendChild(digit);
   }
 }
 
 /*
-  Fonction appelée lors d'un clic sur un chiffre.
+  Fonction appelée lors d'un clic/tap sur un chiffre.
   Le chiffre est ajouté dans le premier emplacement vide de l'opération.
 */
 function onDigitClick(e) {
@@ -148,8 +152,8 @@ function touchMove(e) {
     touchItem.clone.style.pointerEvents = 'none';
     document.body.appendChild(touchItem.clone);
   }
-  touchItem.clone.style.left = (touch.pageX - touchItem.offsetWidth/2) + 'px';
-  touchItem.clone.style.top = (touch.pageY - touchItem.offsetHeight/2) + 'px';
+  touchItem.clone.style.left = (touch.pageX - touchItem.offsetWidth / 2) + 'px';
+  touchItem.clone.style.top = (touch.pageY - touchItem.offsetHeight / 2) + 'px';
 }
 function touchEnd(e) {
   if (touchItem && touchItem.clone) {
