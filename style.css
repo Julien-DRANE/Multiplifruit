@@ -211,7 +211,6 @@ body {
   position: absolute;
   font-size: 2em;
   top: -50px;
-  /* Appliquer l'animation de chute */
   animation: fall 2s linear forwards;
 }
 
@@ -223,5 +222,56 @@ body {
   100% {
     top: calc(100% - 50px);
     opacity: 0;
+  }
+}
+
+/* Media queries pour smartphones */
+@media only screen and (max-width: 600px) {
+  #game-container {
+    max-width: 100%;
+    margin: 10px;
+    padding: 10px;
+  }
+  
+  #rainbow-band {
+    height: 40px;
+    font-size: 1em;
+  }
+  
+  #target-container {
+    width: 120px;
+    height: 120px;
+    font-size: 1.5em;
+    margin: 10px auto;
+  }
+  
+  #operation {
+    margin: 10px;
+    font-size: 1.5em;
+  }
+  
+  .slot {
+    width: 50px;
+    height: 50px;
+    margin: 0 5px;
+  }
+  
+  #digits-container {
+    margin: 10px;
+  }
+  
+  .digit {
+    width: 50px;
+    height: 50px;
+    margin: 5px;
+    font-size: 1.2em;
+  }
+  
+  #fruit-container {
+    height: 150px;
+  }
+  
+  #basin {
+    height: 80px;
   }
 }
