@@ -1,13 +1,13 @@
 /***** Initialisation des sons *****/
 const dingSound = new Audio('sounds/ding.mp3');
-dingSound.volume = 0.1; // Faible volume pour le ding
+dingSound.volume = 0.3; // Faible volume pour le ding
 
 const ambianceSound = new Audio('sounds/ambiance.mp3');
 ambianceSound.volume = 0.2; // Faible volume pour l'ambiance
 ambianceSound.loop = true;
 
 const winSound = new Audio('sounds/win.mp3');
-winSound.volume = 0.2; // Volume pour le son win
+winSound.volume = 0.3; // Volume pour le son win
 
 // Démarrer le fond sonore dès la première interaction de l'utilisateur
 function startAmbiance() {
@@ -64,7 +64,7 @@ function initGame() {
 
 /*
   Création des éléments chiffres de 2 à 10.
-  On ajoute ici les événements de glisser-déposer, tactiles, et un clic/tap pour sélectionner.
+  Les événements sont ajoutés selon le support tactile ou non.
 */
 function createDigits() {
   digitsContainer.innerHTML = ''; // Réinitialise la palette
@@ -75,14 +75,14 @@ function createDigits() {
     digit.setAttribute('draggable', 'true');
     // Glisser-déposer (desktop)
     digit.addEventListener('dragstart', dragStart);
-    // Événement tactile pour le démarrage
-    digit.addEventListener('touchstart', touchStart, {passive: false});
-    // Ajout par simple clic (desktop)
-    digit.addEventListener('click', onDigitClick);
-    // Ajout de l'événement touchend pour smartphone
-    digit.addEventListener('touchend', (e) => {
-      onDigitClick(e);
-    });
+    // Si l'appareil supporte les événements tactiles, utiliser touchstart et touchend
+    if ('ontouchstart' in window || navigator.maxTouchPoints) {
+      digit.addEventListener('touchstart', touchStart, {passive: false});
+      digit.addEventListener('touchend', onDigitClick);
+    } else {
+      // Sinon, utiliser l'événement click
+      digit.addEventListener('click', onDigitClick);
+    }
     digitsContainer.appendChild(digit);
   }
 }
