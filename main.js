@@ -51,6 +51,30 @@ const scoreboard = document.getElementById('scoreboard');
 const solutionContainer = document.getElementById('solution');
 const tableSelector = document.getElementById('table-selector');
 
+// Modification de la cible : transformer le cercle en un ovale large
+targetElement.style.width = "300px";
+targetElement.style.height = "150px";
+targetElement.style.borderRadius = "75px";
+targetElement.style.display = "flex";
+targetElement.style.justifyContent = "center";
+targetElement.style.alignItems = "center";
+
+/***** Bouton pour sortir des modes et revenir à la sélection *****/
+const backButton = document.createElement('button');
+backButton.id = "back-button";
+backButton.textContent = "Changer de mode";
+backButton.style.position = "absolute";
+backButton.style.top = "10px";
+backButton.style.right = "10px";
+document.body.appendChild(backButton);
+backButton.addEventListener("click", () => {
+  // Réafficher la sélection des modes
+  tableSelector.style.display = 'block';
+  document.getElementById('mode-indicator').textContent = "";
+  // Optionnel : réinitialiser certains paramètres
+  selectedTable = null;
+});
+
 /*
   Fonction d'initialisation du jeu.
   Pour chaque opération erronée correspondant au mode courant, on décrémente son compteur.
