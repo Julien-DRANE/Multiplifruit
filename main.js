@@ -32,7 +32,7 @@ let gameMode = "random";
 let missingFactor; // le facteur à deviner
 let hideIndex;    // 0 ou 1 : quel slot doit être complété
 
-// En mode classique, l’équation est affichée sous forme "3 x 3 = ?" et l’utilisateur saisit le résultat
+// En mode classique, l’équation est affichée sous la forme "3 x 3 = ?" et l’utilisateur saisit le résultat
 let classicAnswer = ""; // Chaîne qui accumule les chiffres cliqués
 
 // Variables pour éviter la répétition consécutive et pour gérer les opérations erronées
@@ -58,7 +58,7 @@ const tableSelector = document.getElementById('table-selector');
   Sinon, on génère une nouvelle opération en évitant de répéter la précédente.
   
   L'affichage diffère selon le mode :
-  - random : on affiche uniquement la cible (produit) et les deux slots restent vides.
+  - random : on affiche uniquement la cible (le produit) et les deux slots restent vides.
   - inverse : on masque aléatoirement un des deux facteurs et on affiche l'équation avec un "?".
   - classic : l'équation s'affiche sous la forme "3 x 3 = ?" et le conteneur d'opération est masqué.
 */
@@ -70,10 +70,9 @@ function initGame() {
   slotValues[1] = null;
   solutionContainer.innerHTML = '';
   
-  // En mode classique, on réinitialise la réponse saisie
+  // En mode classique, réinitialiser la réponse saisie et masquer la zone d'opération
   if (gameMode === "classic") {
     classicAnswer = "";
-    // Masquer le conteneur d'opération qui n'est pas utilisé
     document.getElementById('operation').style.display = 'none';
   } else {
     document.getElementById('operation').style.display = 'flex';
@@ -115,7 +114,7 @@ function initGame() {
     } else if (gameMode === "classic") {
       targetElement.innerHTML = `${factor1} x ${factor2} = <span id="answer-display">?</span>`;
     }
-    lastOperation = { factor1, factor2, hideIndex: (gameMode==="inverse"?hideIndex:null), mode: gameMode };
+    lastOperation = { factor1, factor2, hideIndex: (gameMode==="inverse" ? hideIndex : null), mode: gameMode };
   } else {
     // Génération d'une nouvelle opération en évitant la répétition de la précédente
     if (selectedTable !== null) {
@@ -170,17 +169,17 @@ function initGame() {
       }
       targetElement.innerHTML = `${factor1} x ${factor2} = <span id="answer-display">?</span>`;
     }
-    lastOperation = { factor1, factor2, hideIndex: (gameMode==="inverse"?hideIndex:null), mode: gameMode };
+    lastOperation = { factor1, factor2, hideIndex: (gameMode==="inverse" ? hideIndex : null), mode: gameMode };
   }
 }
 
 /*
-  Création des éléments chiffres de 2 à 10.
+  Création des éléments chiffres de 0 à 10.
   Les événements sont ajoutés en fonction du support tactile.
 */
 function createDigits() {
   digitsContainer.innerHTML = ''; // Réinitialise la palette
-  for (let i = 2; i <= 10; i++) {
+  for (let i = 0; i <= 10; i++) {
     const digit = document.createElement('div');
     digit.classList.add('digit');
     digit.textContent = i;
@@ -198,16 +197,15 @@ function createDigits() {
 
 /*
   Fonction appelée lors d'un clic/tap sur un chiffre.
-  Le comportement diffère selon le mode.
-  - En mode classic, le chiffre est ajouté à la réponse saisie.
-  - En mode inverse, seul le slot vide (correspondant au facteur manquant) est complété.
-  - En mode random, on remplit les deux slots dans l'ordre.
+  Le comportement diffère selon le mode :
+  - En mode classic, le chiffre est concaténé à la réponse saisie.
+  - En mode inverse, seule la case correspondant au facteur manquant est complétée.
+  - En mode random, les deux slots se remplissent successivement.
 */
 function onDigitClick(e) {
   const value = e.target.textContent;
   
   if (gameMode === "classic") {
-    // Récupérer l'élément qui affiche la réponse
     let answerDisplay = document.getElementById('answer-display');
     if (!classicAnswer || answerDisplay.textContent === "?") {
       classicAnswer = value;
@@ -223,7 +221,7 @@ function onDigitClick(e) {
       slot2.textContent = value;
       slotValues[1] = parseInt(value);
     }
-  } else { // random mode
+  } else { // Mode random
     if (slotValues[0] === null) {
       slot1.textContent = value;
       slotValues[0] = parseInt(value);
@@ -305,10 +303,9 @@ function touchEnd(e) {
 
 /*
   Vérification de l'opération selon le mode.
-  - En mode classic, on attend que la réponse saisie (classicAnswer) ait la même longueur que targetValue.toString()
-    puis on compare.
-  - En mode inverse, on vérifie le slot vide par rapport au facteur manquant.
-  - En mode random, on compare le produit des deux slots avec targetValue.
+  - En mode classic, on compare classicAnswer à targetValue lorsque la longueur correspond.
+  - En mode inverse, on vérifie que le chiffre saisi dans le slot vide correspond au facteur manquant.
+  - En mode random, on compare le produit des deux slots à targetValue.
   
   En cas d'erreur, l'opération est ajoutée à failedQueue pour être retestée ultérieurement.
 */
