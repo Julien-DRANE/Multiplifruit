@@ -22,8 +22,10 @@
       <button class="table-button" data-table="9">Table de 9</button>
       <button class="table-button" data-table="10">Table de 10</button>
     </div>
-    <!-- Option pour jouer en mode aléatoire -->
+    <!-- Options pour jouer en mode aléatoire, inversé ou classique -->
     <button id="random-mode">Mode aléatoire</button>
+    <button id="inverse-mode">Mode inversé</button>
+    <button id="classic-mode">Mode classique</button>
   </div>
 
   <!-- Indicateur de mode (optionnel) -->
@@ -68,10 +70,25 @@
   <script>
     // Gestion du bouton "Mode aléatoire"
     document.getElementById('random-mode').addEventListener('click', () => {
-      // Désactive le mode table en cachant le sélecteur et en réinitialisant selectedTable
       selectedTable = null;
       document.getElementById('table-selector').style.display = 'none';
       document.getElementById('mode-indicator').textContent = "Mode aléatoire";
+      initGame();
+    });
+
+    // Gestion du bouton "Mode inversé"
+    document.getElementById('inverse-mode').addEventListener('click', () => {
+      selectedTable = null;
+      document.getElementById('table-selector').style.display = 'none';
+      document.getElementById('mode-indicator').textContent = "Mode inversé";
+      initGame();
+    });
+
+    // Gestion du bouton "Mode classique"
+    document.getElementById('classic-mode').addEventListener('click', () => {
+      selectedTable = null;
+      document.getElementById('table-selector').style.display = 'none';
+      document.getElementById('mode-indicator').textContent = "Mode classique";
       initGame();
     });
   </script>
