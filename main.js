@@ -28,15 +28,15 @@ let selectedTable = null; // Pour le mode table
 // gameMode peut être "random", "inverse" ou "classic"
 let gameMode = "random";
 
-// En mode inversé, on cache un facteur et on attend la réponse dans le slot correspondant.
+// En mode inversé, on masque un facteur et on attend la réponse dans le slot correspondant.
 let missingFactor; // le facteur à deviner
 let hideIndex;    // 0 ou 1 : quel slot doit être complété
 
-// En mode classique, l’équation est affichée sous forme "3 x 3 = ?" et la réponse (le produit) est saisie
-let classicAnswer = ""; // Chaîne qui stocke la réponse en mode classique
+// En mode classique, l’équation est affichée sous forme "3 x 3 = ?" et l’utilisateur saisit le résultat
+let classicAnswer = ""; // Chaîne qui accumule les chiffres cliqués
 
 // Variables pour éviter la répétition consécutive et pour gérer les opérations erronées
-// Chaque opération ratée est stockée avec un compteur (retryCounter) et le mode auquel elle appartient.
+// Chaque opération erronée est stockée avec un compteur (retryCounter) et le mode auquel elle appartient.
 let lastOperation = { factor1: null, factor2: null, hideIndex: null, mode: null };
 let failedQueue = [];
 
@@ -53,25 +53,33 @@ const tableSelector = document.getElementById('table-selector');
 
 /*
   Fonction d'initialisation du jeu.
-  Pour chaque opération ratée correspondant au mode courant, on décrémente son compteur.
+  Pour chaque opération erronée correspondant au mode courant, on décrémente son compteur.
   Si une opération est prête (retryCounter <= 0), on la réintroduit.
   Sinon, on génère une nouvelle opération en évitant de répéter la précédente.
   
-  Chaque mode gère l’affichage de l’équation différemment.
+  L'affichage diffère selon le mode :
+  - random : on affiche uniquement la cible (produit) et les deux slots restent vides.
+  - inverse : on masque aléatoirement un des deux facteurs et on affiche l'équation avec un "?".
+  - classic : l'équation s'affiche sous la forme "3 x 3 = ?" et le conteneur d'opération est masqué.
 */
 function initGame() {
-  // Réinitialisation des slots et variables spécifiques selon le mode
+  // Réinitialisation générale
   slot1.textContent = '';
   slot2.textContent = '';
   slotValues[0] = null;
   slotValues[1] = null;
   solutionContainer.innerHTML = '';
-
+  
+  // En mode classique, on réinitialise la réponse saisie
   if (gameMode === "classic") {
     classicAnswer = "";
+    // Masquer le conteneur d'opération qui n'est pas utilisé
+    document.getElementById('operation').style.display = 'none';
+  } else {
+    document.getElementById('operation').style.display = 'flex';
   }
 
-  // Décrémenter le compteur des opérations ratées correspondant au mode courant
+  // Décrémenter retryCounter pour les opérations erronées du mode courant
   for (let op of failedQueue) {
     if (op.mode === gameMode) {
       op.retryCounter--;
@@ -80,7 +88,7 @@ function initGame() {
   let retestOpIndex = failedQueue.findIndex(op => op.retryCounter <= 0 && op.mode === gameMode);
   
   if (retestOpIndex !== -1) {
-    // Réutilisation d'une opération ratée
+    // Réutilisation d'une opération erronée
     let op = failedQueue.splice(retestOpIndex, 1)[0];
     factor1 = op.factor1;
     factor2 = op.factor2;
@@ -88,7 +96,6 @@ function initGame() {
     
     if (gameMode === "random") {
       targetElement.textContent = targetValue;
-      // Les deux slots restent vides pour la réponse
     } else if (gameMode === "inverse") {
       missingFactor = op.missingFactor;
       hideIndex = op.hideIndex;
@@ -106,16 +113,14 @@ function initGame() {
         targetElement.textContent = `${factor1} x ? = ${targetValue}`;
       }
     } else if (gameMode === "classic") {
-      // Afficher l'équation avec les facteurs et un espace pour la réponse
       targetElement.innerHTML = `${factor1} x ${factor2} = <span id="answer-display">?</span>`;
     }
-    lastOperation = { factor1, factor2, hideIndex: (gameMode === "inverse" ? hideIndex : null), mode: gameMode };
+    lastOperation = { factor1, factor2, hideIndex: (gameMode==="inverse"?hideIndex:null), mode: gameMode };
   } else {
     // Génération d'une nouvelle opération en évitant la répétition de la précédente
     if (selectedTable !== null) {
-      // Si une table est fixée, le premier facteur est imposé.
       factor1 = selectedTable;
-      factor2 = Math.floor(Math.random() * 9) + 2; // entre 2 et 10
+      factor2 = Math.floor(Math.random() * 9) + 2;
     } else {
       factor1 = Math.floor(Math.random() * 9) + 2;
       factor2 = Math.floor(Math.random() * 9) + 2;
@@ -123,8 +128,6 @@ function initGame() {
     targetValue = factor1 * factor2;
     
     if (gameMode === "random") {
-      // Mode aléatoire : l’utilisateur doit reconstituer les deux facteurs
-      // On évite la répétition de la précédente opération
       while (lastOperation.mode === "random" &&
              factor1 === lastOperation.factor1 &&
              factor2 === lastOperation.factor2) {
@@ -134,7 +137,6 @@ function initGame() {
       }
       targetElement.textContent = targetValue;
     } else if (gameMode === "inverse") {
-      // Mode inversé : on masque aléatoirement l’un des deux facteurs
       while (lastOperation.mode === "inverse" &&
              factor1 === lastOperation.factor1 &&
              factor2 === lastOperation.factor2) {
@@ -142,11 +144,10 @@ function initGame() {
         factor2 = Math.floor(Math.random() * 9) + 2;
         targetValue = factor1 * factor2;
       }
-      // Choisir aléatoirement lequel masquer (0 = masquer factor1, 1 = masquer factor2)
       hideIndex = Math.floor(Math.random() * 2);
       if (hideIndex === 0) {
         missingFactor = factor1;
-        slot1.textContent = '';     // Réponse attendue ici
+        slot1.textContent = '';
         slotValues[0] = null;
         slot2.textContent = factor2;
         slotValues[1] = factor2;
@@ -155,12 +156,11 @@ function initGame() {
         missingFactor = factor2;
         slot1.textContent = factor1;
         slotValues[0] = factor1;
-        slot2.textContent = '';      // Réponse attendue ici
+        slot2.textContent = '';
         slotValues[1] = null;
         targetElement.textContent = `${factor1} x ? = ${targetValue}`;
       }
     } else if (gameMode === "classic") {
-      // Mode classique : les deux facteurs sont affichés et l’utilisateur doit saisir le produit.
       while (lastOperation.mode === "classic" &&
              factor1 === lastOperation.factor1 &&
              factor2 === lastOperation.factor2) {
@@ -169,9 +169,8 @@ function initGame() {
         targetValue = factor1 * factor2;
       }
       targetElement.innerHTML = `${factor1} x ${factor2} = <span id="answer-display">?</span>`;
-      // On peut laisser les slots vides (ils ne sont pas utilisés en mode classique)
     }
-    lastOperation = { factor1, factor2, hideIndex: (gameMode === "inverse" ? hideIndex : null), mode: gameMode };
+    lastOperation = { factor1, factor2, hideIndex: (gameMode==="inverse"?hideIndex:null), mode: gameMode };
   }
 }
 
@@ -199,13 +198,16 @@ function createDigits() {
 
 /*
   Fonction appelée lors d'un clic/tap sur un chiffre.
-  Le comportement diffère selon le mode de jeu.
+  Le comportement diffère selon le mode.
+  - En mode classic, le chiffre est ajouté à la réponse saisie.
+  - En mode inverse, seul le slot vide (correspondant au facteur manquant) est complété.
+  - En mode random, on remplit les deux slots dans l'ordre.
 */
 function onDigitClick(e) {
   const value = e.target.textContent;
   
   if (gameMode === "classic") {
-    // En mode classique, la réponse (le produit) est saisie directement
+    // Récupérer l'élément qui affiche la réponse
     let answerDisplay = document.getElementById('answer-display');
     if (!classicAnswer || answerDisplay.textContent === "?") {
       classicAnswer = value;
@@ -214,7 +216,6 @@ function onDigitClick(e) {
     }
     answerDisplay.textContent = classicAnswer;
   } else if (gameMode === "inverse") {
-    // En mode inversé, seule la case correspondant au facteur manquant est concernée
     if (hideIndex === 0 && slotValues[0] === null) {
       slot1.textContent = value;
       slotValues[0] = parseInt(value);
@@ -222,8 +223,7 @@ function onDigitClick(e) {
       slot2.textContent = value;
       slotValues[1] = parseInt(value);
     }
-  } else {
-    // En mode random, on complète les deux slots dans l'ordre
+  } else { // random mode
     if (slotValues[0] === null) {
       slot1.textContent = value;
       slotValues[0] = parseInt(value);
@@ -304,17 +304,16 @@ function touchEnd(e) {
 }
 
 /*
-  Vérification de l'opération en fonction du mode.
-  En mode random, on compare le produit des deux slots avec la cible.
-  En mode inverse, on vérifie que le chiffre saisi dans le slot vide correspond au facteur manquant.
-  En mode classique, on attend que la saisie ait la même longueur que le résultat attendu,
-  puis on compare la réponse saisie avec le produit.
+  Vérification de l'opération selon le mode.
+  - En mode classic, on attend que la réponse saisie (classicAnswer) ait la même longueur que targetValue.toString()
+    puis on compare.
+  - En mode inverse, on vérifie le slot vide par rapport au facteur manquant.
+  - En mode random, on compare le produit des deux slots avec targetValue.
   
-  En cas d'erreur, l'opération est ajoutée dans la file failedQueue avec un délai de 2 ou 3 manches.
+  En cas d'erreur, l'opération est ajoutée à failedQueue pour être retestée ultérieurement.
 */
 function checkOperation() {
   if (gameMode === "classic") {
-    // On attend que l'utilisateur ait saisi un nombre de chiffres suffisant
     let expected = targetValue.toString();
     if (classicAnswer && classicAnswer.length === expected.length) {
       if (classicAnswer === expected) {
@@ -363,7 +362,7 @@ function checkOperation() {
         setTimeout(initGame, 2000);
       }
     }
-  } else { // Mode random
+  } else { // mode random
     if (slotValues[0] !== null && slotValues[1] !== null) {
       if (slotValues[0] * slotValues[1] === targetValue) {
         score++;
@@ -474,7 +473,7 @@ function initTableMode() {
 }
 
 /***** Gestion de la sélection du mode de jeu *****/
-// Les boutons de sélection de mode sont définis dans index.html.
+// Ces boutons sont définis dans index.html.
 document.getElementById('random-mode').addEventListener('click', () => {
   gameMode = "random";
   selectedTable = null;
