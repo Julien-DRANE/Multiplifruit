@@ -49,7 +49,7 @@
       <div id="slot2" class="slot" data-index="1"></div>
     </div>
     
-    <!-- Palette des chiffres (2 à 10) -->
+    <!-- Palette des chiffres (0 à 10) -->
     <div id="digits-container"></div>
     
     <!-- Conteneur pour afficher la solution en cas d'erreur -->
@@ -66,31 +66,5 @@
   <div id="scoreboard" style="display:none;"></div>
   
   <script src="main.js"></script>
-  
-  <script>
-    // Gestion du bouton "Mode aléatoire"
-    document.getElementById('random-mode').addEventListener('click', () => {
-      selectedTable = null;
-      document.getElementById('table-selector').style.display = 'none';
-      document.getElementById('mode-indicator').textContent = "Mode aléatoire";
-      initGame();
-    });
-
-    // Gestion du bouton "Mode inversé"
-    document.getElementById('inverse-mode').addEventListener('click', () => {
-      selectedTable = null;
-      document.getElementById('table-selector').style.display = 'none';
-      document.getElementById('mode-indicator').textContent = "Mode inversé";
-      initGame();
-    });
-
-    // Gestion du bouton "Mode classique"
-    document.getElementById('classic-mode').addEventListener('click', () => {
-      selectedTable = null;
-      document.getElementById('table-selector').style.display = 'none';
-      document.getElementById('mode-indicator').textContent = "Mode classique";
-      initGame();
-    });
-  </script>
 </body>
 </html>
