@@ -24,6 +24,10 @@ const slotValues = [null, null];
 let score = 0;
 let selectedTable = null; // Pour le mode table
 
+// Variables pour gérer les opérations
+let lastOperation = { factor1: null, factor2: null };  // Permet d'éviter la répétition consécutive
+let failedQueue = []; // File des opérations erronées à retester
+
 const targetElement = document.getElementById('target');
 const slot1 = document.getElementById('slot1');
 const slot2 = document.getElementById('slot2');
@@ -37,22 +41,50 @@ const tableSelector = document.getElementById('table-selector');
 
 /*
   Fonction d'initialisation du jeu.
-  Si un mode table est sélectionné, le premier facteur est fixé.
-  Sinon, les deux facteurs sont générés aléatoirement (avec produit > 10).
+  - Décrémente le compteur des opérations ratées.
+  - Si une opération ratée est prête (compteur <= 0), on la réutilise.
+  - Sinon, on génère une nouvelle opération en évitant de répéter la précédente.
 */
 function initGame() {
-  if (selectedTable !== null) {
-    factor1 = selectedTable;
-    factor2 = Math.floor(Math.random() * 9) + 2; // entre 2 et 10
+  // Décrémenter le compteur pour chaque opération ratée
+  for (let op of failedQueue) {
+    op.retryCounter--;
+  }
+
+  // Vérifier si une opération ratée est prête à être retestée (retryCounter <= 0)
+  let retestOpIndex = failedQueue.findIndex(op => op.retryCounter <= 0);
+  if (retestOpIndex !== -1) {
+    // Utiliser cette opération et la retirer de la file
+    let op = failedQueue.splice(retestOpIndex, 1)[0];
+    factor1 = op.factor1;
+    factor2 = op.factor2;
     targetValue = factor1 * factor2;
   } else {
-    do {
-      factor1 = Math.floor(Math.random() * 9) + 2; // entre 2 et 10
-      factor2 = Math.floor(Math.random() * 9) + 2; // entre 2 et 10
+    // Génération d'une nouvelle opération en évitant la répétition de la dernière
+    if (selectedTable !== null) {
+      let newFactor2;
+      do {
+        newFactor2 = Math.floor(Math.random() * 9) + 2; // entre 2 et 10
+      } while (selectedTable === lastOperation.factor1 && newFactor2 === lastOperation.factor2);
+      factor1 = selectedTable;
+      factor2 = newFactor2;
       targetValue = factor1 * factor2;
-    } while (targetValue <= 10);
+    } else {
+      let newFactor1, newFactor2, newTarget;
+      do {
+        newFactor1 = Math.floor(Math.random() * 9) + 2; // entre 2 et 10
+        newFactor2 = Math.floor(Math.random() * 9) + 2; // entre 2 et 10
+        newTarget = newFactor1 * newFactor2;
+      } while (newTarget <= 10 || (newFactor1 === lastOperation.factor1 && newFactor2 === lastOperation.factor2));
+      factor1 = newFactor1;
+      factor2 = newFactor2;
+      targetValue = newTarget;
+    }
   }
   
+  // Mettre à jour la dernière opération proposée
+  lastOperation = { factor1: factor1, factor2: factor2 };
+
   targetElement.textContent = targetValue;
   // Réinitialiser les emplacements de l'opération
   slot1.textContent = '';
@@ -177,7 +209,10 @@ function touchEnd(e) {
   document.removeEventListener('touchend', touchEnd);
 }
 
-/***** Vérification de l'opération *****/
+/*
+  Vérification de l'opération.
+  Si l'utilisateur se trompe, on ajoute l'opération dans la file de retest avec un délai aléatoire de 2 ou 3 opérations.
+*/
 function checkOperation() {
   if (slotValues[0] !== null && slotValues[1] !== null) {
     if (slotValues[0] * slotValues[1] === targetValue) {
@@ -200,6 +235,11 @@ function checkOperation() {
       score = Math.max(score - 1, 0);
       scoreElement.textContent = "Score : " + score;
       solutionContainer.innerHTML = `<strong>La solution était : ${factor1} x ${factor2} = ${targetValue}</strong>`;
+      
+      // Ajouter l'opération ratée dans la file de retest avec un délai de 2 ou 3 opérations
+      let retryDelay = Math.floor(Math.random() * 2) + 2; // 2 ou 3
+      failedQueue.push({ factor1: factor1, factor2: factor2, retryCounter: retryDelay });
+      
       setTimeout(initGame, 2000);
     }
   }
@@ -292,7 +332,7 @@ function initTableMode() {
   });
 }
 
-// Lancement initial du mode TABLES
+// Lancement initial du mode TABLES, du jeu et de la création de la palette de chiffres
 initTableMode();
 initGame();
 createDigits();
